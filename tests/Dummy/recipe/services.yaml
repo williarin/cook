@@ -1,0 +1,5 @@
+parameters:
+    locale: fr
+
+services:
+    Some\Service: ~

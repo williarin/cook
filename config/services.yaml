@@ -1,0 +1,25 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    Williarin\Cook\:
+        resource: '../src/'
+        exclude:
+            - '../src/Command/'
+            - '../src/Cook.php'
+
+    Williarin\Cook\Oven:
+        public: true
+
+    Williarin\Cook\StateInterface: '@Williarin\Cook\State'
+
+    Composer\Composer:
+        synthetic: true
+
+    Composer\IO\IOInterface:
+        synthetic: true
+
+    Symfony\Component\Filesystem\Filesystem: ~

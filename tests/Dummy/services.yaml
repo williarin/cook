@@ -1,0 +1,15 @@
+parameters:
+    some_parameter: true
+    another_parameter: Hello world
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'

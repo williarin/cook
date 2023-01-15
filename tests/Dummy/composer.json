@@ -1,0 +1,9 @@
+{
+    "name": "williarin/cook",
+    "scripts": {
+        "post-update-cmd": "MyVendor\\MyClass::postUpdate",
+        "post-package-install": [
+            "MyVendor\\MyClass::postPackageInstall"
+        ]
+    }
+}
