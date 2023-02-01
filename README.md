@@ -10,7 +10,6 @@ Baking recipes for any PHP package.
   * [Introduction](#introduction)
     * [Features](#features)
   * [Installation](#installation)
-  * [Usage](#usage)
   * [Documentation](#documentation)
     * [Creating a recipe](#creating-a-recipe)
       * [Files](#files)
@@ -57,9 +56,6 @@ Make sure to allow the plugin to run. If it's not added automatically, add this 
         }
     },
 ```
-
-## Usage
-
 
 ## Documentation
 
