@@ -1,0 +1,58 @@
+name: Test
+
+on:
+    push:
+        branches:
+            - master
+        paths-ignore:
+            - '**/README.md'
+    pull_request:
+        branches:
+            - '**'
+        paths-ignore:
+            - '**/README.md'
+
+concurrency:
+    group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+    cancel-in-progress: true
+
+jobs:
+    test:
+        name: Test
+
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                php: ['8.0', '8.1', '8.2']
+
+        steps:
+            -   uses: actions/checkout@v3
+
+            -   name: Setup PHP
+                id: setup-php
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php }}
+                    extensions: dom, curl, libxml, mbstring, zip
+                    tools: composer:v2
+
+            -   name: Validate composer.json and composer.lock
+                run: composer validate
+
+            -   name: Get composer cache directory
+                id: composer-cache
+                run: echo "dir="$(composer config cache-files-dir)"" >> $GITHUB_OUTPUT
+
+            -   name: Cache dependencies
+                uses: actions/cache@v3
+                with:
+                    path: ${{ steps.composer-cache.outputs.dir }}
+                    key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: ${{ runner.os }}-composer-
+
+            -   name: Install composer dependencies
+                run: composer install
+
+            -   name: Launch test suite
+                run: make test
