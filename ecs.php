@@ -30,6 +30,7 @@ return static function (ECSConfig $ecsConfig): void {
 
     $ecsConfig->skip([
         __DIR__ . '/ecs.php',
+        __DIR__ . '/tests/Dummy/',
     ]);
 
     $ecsConfig->sets([

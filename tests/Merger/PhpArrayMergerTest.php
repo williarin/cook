@@ -52,12 +52,13 @@ class PhpArrayMergerTest extends MergerTestCase
             ->once()
             ->with('./var/cache/tests', 0755);
 
-        $fileExists = $this->getFunctionMock('Williarin\Cook\Merger', 'file_exists');
-        $fileExists->expects($this->atLeastOnce())
-            ->willReturn(false);
+        $this->filesystem->shouldReceive('exists')
+            ->atLeast()
+            ->once()
+            ->andReturn(false);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
                 './var/cache/tests/bundles.php',
                 <<<CODE_SAMPLE
@@ -104,12 +105,13 @@ class PhpArrayMergerTest extends MergerTestCase
             ->once()
             ->with('./var/cache/tests', 0755);
 
-        $fileExists = $this->getFunctionMock('Williarin\Cook\Merger', 'file_exists');
-        $fileExists->expects($this->atLeastOnce())
-            ->willReturn(false);
+        $this->filesystem->shouldReceive('exists')
+            ->atLeast()
+            ->once()
+            ->andReturn(false);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
                 './var/cache/tests/bundles.php',
                 <<<CODE_SAMPLE
@@ -133,7 +135,7 @@ class PhpArrayMergerTest extends MergerTestCase
     public function testMergeExistingFileWithFilters(): void
     {
         $file = [
-            'destination' => 'tests/Dummy/bundles.php',
+            'destination' => 'tests/Dummy/before/bundles.php',
             'entries' => [
                 'Williarin\CookExampleBundle' => [
                     'dev' => true,
@@ -151,16 +153,16 @@ class PhpArrayMergerTest extends MergerTestCase
 
         $this->filesystem->shouldReceive('mkdir')
             ->once()
-            ->with('./tests/Dummy', 0755);
+            ->with('./tests/Dummy/before', 0755);
 
-        $fileExists = $this->getFunctionMock('Williarin\Cook\Merger', 'file_exists');
-        $fileExists->expects($this->exactly(2))
-            ->willReturn(true);
+        $this->filesystem->shouldReceive('exists')
+            ->twice()
+            ->andReturn(true);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
-                './tests/Dummy/bundles.php',
+                './tests/Dummy/before/bundles.php',
                 <<<CODE_SAMPLE
                 <?php
 
@@ -177,8 +179,67 @@ class PhpArrayMergerTest extends MergerTestCase
 
         $this->io->shouldReceive('write')
             ->once()
-            ->with('Updated file: ./tests/Dummy/bundles.php');
+            ->with('Updated file: ./tests/Dummy/before/bundles.php');
 
         $this->merger->merge($file);
+    }
+
+    public function testUninstallWithoutEntries(): void
+    {
+        $this->io->shouldReceive('write')
+            ->once()
+            ->with(
+                '<error>Error found in williarin/cook-example recipe: file of type "php_array" requires "entries" field.</>'
+            )
+        ;
+
+        $this->merger->uninstall([]);
+    }
+
+    public function testUninstallRecipe(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/after/bundles.php',
+            'entries' => [
+                'Williarin\CookExampleBundle' => [
+                    'dev' => true,
+                    'test' => true,
+                ],
+            ],
+            'filters' => [
+                'keys' => ['class_constant'],
+                'values' => ['single_line_array'],
+            ],
+        ];
+
+        $this->addFilter('class_constant', ClassConstantFilter::class);
+        $this->addFilter('single_line_array', SingleLineArrayFilter::class);
+
+        $this->filesystem->shouldReceive('exists')
+            ->once()
+            ->andReturn(true);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
+            ->with(
+                './tests/Dummy/after/bundles.php',
+                <<<CODE_SAMPLE
+                <?php
+
+                return [
+                    Symfony\Bundle\FrameworkBundle\FrameworkBundle::class => ['all' => true],
+                    Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class => ['all' => true],
+                    Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle::class => ['all' => true],
+                ];
+
+                CODE_SAMPLE
+                ,
+            );
+
+        $this->io->shouldReceive('write')
+            ->once()
+            ->with('Updated file: ./tests/Dummy/after/bundles.php');
+
+        $this->merger->uninstall($file);
     }
 }

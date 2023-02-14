@@ -51,8 +51,12 @@ class YamlMergerTest extends MergerTestCase
             ->once()
             ->with('./var/cache/tests', 0755);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('exists')
+            ->twice()
+            ->andReturn(false);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
                 './var/cache/tests/services.yaml',
                 <<<CODE_SAMPLE
@@ -88,8 +92,12 @@ class YamlMergerTest extends MergerTestCase
             ->once()
             ->with('./var/cache/tests', 0755);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('exists')
+            ->times(3)
+            ->andReturn(true, false, false);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
                 './var/cache/tests/services.yaml',
                 <<<CODE_SAMPLE
@@ -117,18 +125,23 @@ class YamlMergerTest extends MergerTestCase
     public function testMergeExistingFile(): void
     {
         $file = [
-            'destination' => 'tests/Dummy/services.yaml',
+            'destination' => 'tests/Dummy/before/services.yaml',
             'source' => 'services.yaml',
         ];
 
         $this->filesystem->shouldReceive('mkdir')
             ->once()
-            ->with('./tests/Dummy', 0755);
+            ->with('./tests/Dummy/before', 0755);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('exists')
+            ->atLeast()
+            ->once()
+            ->andReturn(true);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
-                './tests/Dummy/services.yaml',
+                './tests/Dummy/before/services.yaml',
                 <<<CODE_SAMPLE
                 parameters:
                 ###> williarin/cook-example ###
@@ -158,7 +171,7 @@ class YamlMergerTest extends MergerTestCase
 
         $this->io->shouldReceive('write')
             ->once()
-            ->with('Updated file: ./tests/Dummy/services.yaml');
+            ->with('Updated file: ./tests/Dummy/before/services.yaml');
 
         $this->merger->merge($file);
     }
@@ -166,19 +179,24 @@ class YamlMergerTest extends MergerTestCase
     public function testMergeWithBlankLines(): void
     {
         $file = [
-            'destination' => 'tests/Dummy/services.yaml',
+            'destination' => 'tests/Dummy/before/services.yaml',
             'source' => 'services.yaml',
             'blank_line_after' => ['services'],
         ];
 
         $this->filesystem->shouldReceive('mkdir')
             ->once()
-            ->with('./tests/Dummy', 0755);
+            ->with('./tests/Dummy/before', 0755);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('exists')
+            ->atLeast()
+            ->once()
+            ->andReturn(true);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
-                './tests/Dummy/services.yaml',
+                './tests/Dummy/before/services.yaml',
                 <<<CODE_SAMPLE
                 parameters:
                 ###> williarin/cook-example ###
@@ -209,7 +227,7 @@ class YamlMergerTest extends MergerTestCase
 
         $this->io->shouldReceive('write')
             ->once()
-            ->with('Updated file: ./tests/Dummy/services.yaml');
+            ->with('Updated file: ./tests/Dummy/before/services.yaml');
 
         $this->merger->merge($file);
     }
@@ -217,19 +235,24 @@ class YamlMergerTest extends MergerTestCase
     public function testMergeValidSectionsOnly(): void
     {
         $file = [
-            'destination' => 'tests/Dummy/services.yaml',
+            'destination' => 'tests/Dummy/before/services.yaml',
             'source' => 'services.yaml',
             'valid_sections' => ['services'],
         ];
 
         $this->filesystem->shouldReceive('mkdir')
             ->once()
-            ->with('./tests/Dummy', 0755);
+            ->with('./tests/Dummy/before', 0755);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('exists')
+            ->atLeast()
+            ->once()
+            ->andReturn(true);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
-                './tests/Dummy/services.yaml',
+                './tests/Dummy/before/services.yaml',
                 <<<CODE_SAMPLE
                 parameters:
                     some_parameter: true
@@ -256,8 +279,52 @@ class YamlMergerTest extends MergerTestCase
 
         $this->io->shouldReceive('write')
             ->once()
-            ->with('Updated file: ./tests/Dummy/services.yaml');
+            ->with('Updated file: ./tests/Dummy/before/services.yaml');
 
         $this->merger->merge($file);
+    }
+
+    public function testUninstallRecipe(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/after/services.yaml',
+            'source' => 'services.yaml',
+            'blank_line_after' => ['services'],
+        ];
+
+        $this->filesystem->shouldReceive('exists')
+            ->once()
+            ->andReturn(true);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
+            ->with(
+                './tests/Dummy/after/services.yaml',
+                <<<CODE_SAMPLE
+                parameters:
+                    some_parameter: true
+                    another_parameter: Hello world
+                
+                services:
+                    _defaults:
+                        autowire: true
+                        autoconfigure: true
+                
+                    App\:
+                        resource: '../src/'
+                        exclude:
+                            - '../src/DependencyInjection/'
+                            - '../src/Entity/'
+                            - '../src/Kernel.php'
+                
+                CODE_SAMPLE
+                ,
+            );
+
+        $this->io->shouldReceive('write')
+            ->once()
+            ->with('Updated file: ./tests/Dummy/after/services.yaml');
+
+        $this->merger->uninstall($file);
     }
 }

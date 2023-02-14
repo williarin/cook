@@ -1,0 +1,22 @@
+parameters:
+    ###> williarin/cook-example ###
+    locale: fr
+    ###< williarin/cook-example ###
+    some_parameter: true
+    another_parameter: Hello world
+
+services:
+    ###> williarin/cook-example ###
+    Some\Service: ~
+    ###< williarin/cook-example ###
+
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'

@@ -7,15 +7,12 @@ namespace Williarin\Cook\Test\Merger;
 use Composer\IO\IOInterface;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryTestCase;
-use phpmock\phpunit\PHPMock;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Filesystem\Filesystem;
 use Williarin\Cook\StateInterface;
 
 abstract class MergerTestCase extends MockeryTestCase
 {
-    use PHPMock;
-
     protected function setUp(): void
     {
         parent::setUp();

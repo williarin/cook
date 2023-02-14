@@ -30,7 +30,7 @@ final class PhpArrayMerger extends AbstractMerger
             $this->state->getProjectDirectory(),
             $this->state->replacePathPlaceholders($file['destination']),
         );
-        $output = file_exists($destinationPathname) ? require($destinationPathname) : [];
+        $output = $this->filesystem->exists($destinationPathname) ? require($destinationPathname) : [];
         $changedCount = 0;
 
         foreach ($file['entries'] as $key => $value) {
@@ -49,11 +49,43 @@ final class PhpArrayMerger extends AbstractMerger
             return;
         }
 
-        $fileExists = file_exists($destinationPathname);
+        $fileExists = $this->filesystem->exists($destinationPathname);
         $this->filesystem->mkdir(\dirname($destinationPathname), 0755);
-        file_put_contents($destinationPathname, $this->dump($output, $file['filters'] ?? []));
+        $this->filesystem->dumpFile($destinationPathname, $this->dump($output, $file['filters'] ?? []));
 
         $this->io->write(sprintf('%s file: %s', $fileExists ? 'Updated' : 'Created', $destinationPathname));
+    }
+
+    public function uninstall(array $file): void
+    {
+        if (!\array_key_exists('entries', $file)) {
+            $this->io->write(sprintf(
+                '<error>Error found in %s recipe: file of type "php_array" requires "entries" field.</>',
+                $this->state->getCurrentPackage(),
+            ));
+
+            return;
+        }
+
+        $destinationPathname = sprintf(
+            '%s/%s',
+            $this->state->getProjectDirectory(),
+            $this->state->replacePathPlaceholders($file['destination']),
+        );
+
+        if (!$this->filesystem->exists($destinationPathname)) {
+            return;
+        }
+
+        $output = require($destinationPathname);
+
+        foreach ($file['entries'] as $key => $value) {
+            unset($output[$key]);
+        }
+
+        $this->filesystem->dumpFile($destinationPathname, $this->dump($output, $file['filters'] ?? []));
+
+        $this->io->write(sprintf('Updated file: %s', $destinationPathname));
     }
 
     protected function dump(array $array, array $filters = []): string

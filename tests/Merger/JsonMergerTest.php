@@ -48,12 +48,13 @@ class JsonMergerTest extends MergerTestCase
             ->once()
             ->with('./var/cache/tests', 0755);
 
-        $fileExists = $this->getFunctionMock('Williarin\Cook\Merger', 'file_exists');
-        $fileExists->expects($this->atLeastOnce())
-            ->willReturn(false);
+        $this->filesystem->shouldReceive('exists')
+            ->atLeast()
+            ->once()
+            ->andReturn(false);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
                 './var/cache/tests/composer.json',
                 <<<CODE_SAMPLE
@@ -76,7 +77,7 @@ class JsonMergerTest extends MergerTestCase
     public function testMergeExistingFile(): void
     {
         $file = [
-            'destination' => 'tests/Dummy/composer.json',
+            'destination' => 'tests/Dummy/before/composer.json',
             'entries' => [
                 'scripts' => [
                     'post-create-project-cmd' => "php -r \"copy('config/local-example.php', 'config/local.php');\"",
@@ -87,16 +88,16 @@ class JsonMergerTest extends MergerTestCase
 
         $this->filesystem->shouldReceive('mkdir')
             ->once()
-            ->with('./tests/Dummy', 0755);
+            ->with('./tests/Dummy/before', 0755);
 
-        $fileExists = $this->getFunctionMock('Williarin\Cook\Merger', 'file_exists');
-        $fileExists->expects($this->exactly(2))
-            ->willReturn(true);
+        $this->filesystem->shouldReceive('exists')
+            ->twice()
+            ->andReturn(true);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
-                './tests/Dummy/composer.json',
+                './tests/Dummy/before/composer.json',
                 <<<CODE_SAMPLE
                 {
                     "name": "williarin/cook",
@@ -115,8 +116,61 @@ class JsonMergerTest extends MergerTestCase
 
         $this->io->shouldReceive('write')
             ->once()
-            ->with('Updated file: ./tests/Dummy/composer.json');
+            ->with('Updated file: ./tests/Dummy/before/composer.json');
 
         $this->merger->merge($file);
+    }
+
+    public function testUninstallWithoutEntries(): void
+    {
+        $this->io->shouldReceive('write')
+            ->once()
+            ->with(
+                '<error>Error found in williarin/cook-example recipe: file of type "json" requires "entries" field.</>'
+            )
+        ;
+
+        $this->merger->uninstall([]);
+    }
+
+    public function testUninstallRecipe(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/after/composer.json',
+            'entries' => [
+                'scripts' => [
+                    'post-create-project-cmd' => "php -r \"copy('config/local-example.php', 'config/local.php');\"",
+                ],
+                'new-entry' => 'some-config',
+            ],
+        ];
+
+        $this->filesystem->shouldReceive('exists')
+            ->once()
+            ->andReturn(true);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
+            ->with(
+                './tests/Dummy/after/composer.json',
+                <<<CODE_SAMPLE
+                {
+                    "name": "williarin/cook",
+                    "scripts": {
+                        "post-update-cmd": "MyVendor\\\\MyClass::postUpdate",
+                        "post-package-install": [
+                            "MyVendor\\\\MyClass::postPackageInstall"
+                        ]
+                    }
+                }
+                CODE_SAMPLE
+                ,
+            );
+
+        $this->io->shouldReceive('write')
+            ->once()
+            ->with('Updated file: ./tests/Dummy/after/composer.json');
+
+        $this->merger->uninstall($file);
     }
 }
