@@ -19,7 +19,6 @@ use Williarin\Cook\Command\CookUninstallCommand;
 final class Cook implements PluginInterface, Capable, EventSubscriberInterface, CommandProvider
 {
     private array $newPackages = [];
-    private array $packagesToRemove = [];
     private ?ServiceContainer $serviceContainer = null;
     private Composer $composer;
     private IOInterface $io;
@@ -74,15 +73,16 @@ final class Cook implements PluginInterface, Capable, EventSubscriberInterface, 
 
     public function removePackage(PackageEvent $event): void
     {
-        $this->packagesToRemove[] = $event->getOperation()
+        $package = $event->getOperation()
             ->getPackage()
             ->getName();
+
+        $this->uninstallRecipe($package);
     }
 
     public function postUpdate(): void
     {
         $this->executeRecipes();
-        $this->uninstallRecipes();
         $this->displayPostInstallOutput();
     }
 
@@ -102,11 +102,11 @@ final class Cook implements PluginInterface, Capable, EventSubscriberInterface, 
             ?->cookRecipes($this->newPackages);
     }
 
-    private function uninstallRecipes(): void
+    private function uninstallRecipe(string $package): void
     {
         $this->getServiceContainer()
             ->get(Oven::class)
-            ?->uninstallRecipes($this->packagesToRemove);
+            ?->uninstallRecipes([$package]);
     }
 
     private function displayPostInstallOutput(): void
