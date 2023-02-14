@@ -40,6 +40,8 @@ It can be used alongside with Flex, or in any other PHP project, as long as Comp
 * Supports PHP arrays, JSON, YAML, text files
 * Output post install instructions
 * Process only required packages in the root project
+* Uninstall recipe when a package is removed
+* CLI commands to install or uninstall recipes
 
 ## Installation
 
@@ -353,6 +355,13 @@ It won't overwrite your configuration if it already exists. To overwrite everyth
 ```bash
 composer cook --overwrite
 ```
+
+Additionally, you can uninstall a recipe with this command:
+
+```bash
+composer cook:uninstall <package> [--all]
+```
+Use either `<package>` for individual package uninstallation or `--all` for all packages. 
 
 ## License
 

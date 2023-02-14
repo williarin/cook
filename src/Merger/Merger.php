@@ -11,4 +11,5 @@ interface Merger
 {
     public static function getName(): string;
     public function merge(array $file): void;
+    public function uninstall(array $file): void;
 }

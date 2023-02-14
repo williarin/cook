@@ -32,7 +32,7 @@ class YamlMerger extends AbstractMerger
 
         $inputParsed = Yaml::parse($input);
         $destinationPathname = $this->getDestinationRealPathname($file);
-        $output = file_exists($destinationPathname) ? file_get_contents($destinationPathname) : '';
+        $output = $this->filesystem->exists($destinationPathname) ? file_get_contents($destinationPathname) : '';
         $updated = false;
 
         foreach ($this->validSections ?? array_keys($inputParsed) as $section) {
@@ -81,11 +81,45 @@ class YamlMerger extends AbstractMerger
             $output,
         );
 
-        $fileExists = file_exists($destinationPathname);
+        $fileExists = $this->filesystem->exists($destinationPathname);
         $this->filesystem->mkdir(\dirname($destinationPathname), 0755);
-        file_put_contents($destinationPathname, trim($output) . "\n");
+        $this->filesystem->dumpFile($destinationPathname, trim($output) . "\n");
 
         $this->io->write(sprintf('%s file: %s', $fileExists ? 'Updated' : 'Created', $destinationPathname));
+    }
+
+    public function uninstall(array $file): void
+    {
+        $destinationPathname = $this->getDestinationRealPathname($file);
+
+        if (!$this->filesystem->exists($destinationPathname)) {
+            return;
+        }
+
+        $content = file_get_contents($destinationPathname);
+        $output = preg_replace(
+            sprintf(
+                '/^\s*%s.*%s\n+?/simU',
+                preg_quote($this->getRecipeIdOpeningComment(), '/'),
+                preg_quote($this->getRecipeIdClosingComment(), '/'),
+            ),
+            '',
+            $content,
+        );
+
+        if ($content === $output) {
+            return;
+        }
+
+        if (!trim($output)) {
+            $this->filesystem->remove($destinationPathname);
+            $this->io->write(sprintf('Removed file: %s', $destinationPathname));
+
+            return;
+        }
+
+        $this->filesystem->dumpFile($destinationPathname, $output);
+        $this->io->write(sprintf('Updated file: %s', $destinationPathname));
     }
 
     private function appendBlankLine(string $section): string

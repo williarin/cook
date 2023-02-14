@@ -48,8 +48,12 @@ class TextMergerTest extends MergerTestCase
             ->once()
             ->with('./var/cache/tests', 0755);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('exists')
+            ->twice()
+            ->andReturn(false);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
                 './var/cache/tests/.env',
                 <<<CODE_SAMPLE
@@ -80,8 +84,12 @@ class TextMergerTest extends MergerTestCase
             ->once()
             ->with('./var/cache/tests', 0755);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('exists')
+            ->times(3)
+            ->andReturn(true, false, false);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
                 './var/cache/tests/.env',
                 <<<CODE_SAMPLE
@@ -104,18 +112,22 @@ class TextMergerTest extends MergerTestCase
     public function testMergeExistingFile(): void
     {
         $file = [
-            'destination' => 'tests/Dummy/.env',
+            'destination' => 'tests/Dummy/before/.env',
             'source' => '.env',
         ];
 
         $this->filesystem->shouldReceive('mkdir')
             ->once()
-            ->with('./tests/Dummy', 0755);
+            ->with('./tests/Dummy/before', 0755);
 
-        $filePutContents = $this->getFunctionMock('Williarin\Cook\Merger', 'file_put_contents');
-        $filePutContents->expects($this->once())
+        $this->filesystem->shouldReceive('exists')
+            ->times(3)
+            ->andReturn(true);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
             ->with(
-                './tests/Dummy/.env',
+                './tests/Dummy/before/.env',
                 <<<CODE_SAMPLE
                 APP_ENV=dev
                 APP_SECRET=10a4bee52442dcf74a9f6b5a9afd319a
@@ -132,8 +144,39 @@ class TextMergerTest extends MergerTestCase
 
         $this->io->shouldReceive('write')
             ->once()
-            ->with('Updated file: ./tests/Dummy/.env');
+            ->with('Updated file: ./tests/Dummy/before/.env');
 
         $this->merger->merge($file);
+    }
+
+    public function testUninstallRecipe(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/after/.env',
+            'source' => '.env',
+        ];
+
+        $this->filesystem->shouldReceive('exists')
+            ->once()
+            ->andReturn(true);
+
+        $this->filesystem->shouldReceive('dumpFile')
+            ->once()
+            ->with(
+                './tests/Dummy/after/.env',
+                <<<CODE_SAMPLE
+                APP_ENV=dev
+                APP_SECRET=10a4bee52442dcf74a9f6b5a9afd319a
+                DATABASE_URL="postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=14&charset=utf8"
+                \n
+                CODE_SAMPLE
+                ,
+            );
+
+        $this->io->shouldReceive('write')
+            ->once()
+            ->with('Updated file: ./tests/Dummy/after/.env');
+
+        $this->merger->uninstall($file);
     }
 }

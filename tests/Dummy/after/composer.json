@@ -1,0 +1,11 @@
+{
+    "name": "williarin/cook",
+    "scripts": {
+        "post-update-cmd": "MyVendor\\MyClass::postUpdate",
+        "post-package-install": [
+            "MyVendor\\MyClass::postPackageInstall"
+        ],
+        "post-create-project-cmd": "php -r \"copy('config/local-example.php', 'config/local.php');\""
+    },
+    "new-entry": "some-config"
+}

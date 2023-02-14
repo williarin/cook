@@ -14,10 +14,12 @@ use Composer\Plugin\Capable;
 use Composer\Plugin\PluginInterface;
 use Composer\Script\ScriptEvents;
 use Williarin\Cook\Command\CookCommand;
+use Williarin\Cook\Command\CookUninstallCommand;
 
 final class Cook implements PluginInterface, Capable, EventSubscriberInterface, CommandProvider
 {
     private array $newPackages = [];
+    private array $packagesToRemove = [];
     private ?ServiceContainer $serviceContainer = null;
     private Composer $composer;
     private IOInterface $io;
@@ -45,7 +47,7 @@ final class Cook implements PluginInterface, Capable, EventSubscriberInterface, 
 
     public function getCommands(): array
     {
-        return [new CookCommand()];
+        return [new CookCommand(), new CookUninstallCommand()];
     }
 
     public static function getSubscribedEvents(): array
@@ -53,6 +55,7 @@ final class Cook implements PluginInterface, Capable, EventSubscriberInterface, 
         return [
             PackageEvents::POST_PACKAGE_INSTALL => ['addNewPackage'],
             PackageEvents::POST_PACKAGE_UPDATE => ['addNewPackage'],
+            PackageEvents::PRE_PACKAGE_UNINSTALL => ['removePackage'],
             ScriptEvents::POST_INSTALL_CMD => ['postUpdate'],
             ScriptEvents::POST_UPDATE_CMD => ['postUpdate'],
         ];
@@ -69,9 +72,17 @@ final class Cook implements PluginInterface, Capable, EventSubscriberInterface, 
         $this->newPackages[] = $package->getName();
     }
 
+    public function removePackage(PackageEvent $event): void
+    {
+        $this->packagesToRemove[] = $event->getOperation()
+            ->getPackage()
+            ->getName();
+    }
+
     public function postUpdate(): void
     {
         $this->executeRecipes();
+        $this->uninstallRecipes();
         $this->displayPostInstallOutput();
     }
 
@@ -89,6 +100,13 @@ final class Cook implements PluginInterface, Capable, EventSubscriberInterface, 
         $this->getServiceContainer()
             ->get(Oven::class)
             ?->cookRecipes($this->newPackages);
+    }
+
+    private function uninstallRecipes(): void
+    {
+        $this->getServiceContainer()
+            ->get(Oven::class)
+            ?->uninstallRecipes($this->packagesToRemove);
     }
 
     private function displayPostInstallOutput(): void

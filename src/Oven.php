@@ -47,6 +47,21 @@ final class Oven
         $this->io->write('');
     }
 
+    public function uninstallRecipes(array $packages): void
+    {
+        $this->state->setOverwrite(false);
+
+        foreach ($packages as $package) {
+            $this->state->setCurrentPackage($package);
+
+            if ($this->uninstallPackageRecipe() === false) {
+                $this->io->write(sprintf('<warning>Aborting %s recipe uninstallation.</>', $package));
+            }
+        }
+
+        $this->io->write('');
+    }
+
     public function displayPostInstallOutput(?array $packages = null): void
     {
         $this->state->setOverwrite(false);
@@ -87,6 +102,39 @@ final class Oven
 
         foreach ($recipe['directories'] ?? [] as $destination => $source) {
             $this->copyDirectory($source, $destination);
+        }
+
+        return true;
+    }
+
+    private function uninstallPackageRecipe(): ?bool
+    {
+        if (!$this->state->getCurrentPackageRecipePathname()) {
+            return null;
+        }
+
+        $this->io->write(sprintf("\nUninstalling Cook recipe for <comment>%s</>", $this->state->getCurrentPackage()));
+
+        if (!($recipe = $this->loadAndValidateRecipe())) {
+            return false;
+        }
+
+        foreach ($recipe['files'] ?? [] as $file) {
+            if (!$this->mergers->has($file['type'])) {
+                $this->io->write(sprintf(
+                    '<error>Error found in %s recipe: type "%s" unknown.</>',
+                    $this->state->getCurrentPackage(),
+                    $file['type'],
+                ));
+
+                continue;
+            }
+
+            $this->mergers->get($file['type'])->uninstall($file);
+        }
+
+        foreach ($recipe['directories'] ?? [] as $destination => $source) {
+            $this->removeFilesFromDirectory($source, $destination);
         }
 
         return true;
@@ -270,7 +318,7 @@ final class Oven
             );
 
             $this->filesystem->mkdir(\dirname($destinationPathname));
-            $fileExists = file_exists($destinationPathname);
+            $fileExists = $this->filesystem->exists($destinationPathname);
 
             if (
                 !$fileExists
@@ -281,6 +329,38 @@ final class Oven
             ) {
                 $this->filesystem->copy($file->getPathname(), $destinationPathname, true);
                 $this->io->write(sprintf('%s file: %s', $fileExists ? 'Updated' : 'Created', $destinationPathname));
+            }
+        }
+    }
+
+    private function removeFilesFromDirectory(string $source, string $destination): void
+    {
+        $sourceDir = $this->state->getCurrentPackageDirectory() . '/' . $source;
+
+        if (!$this->filesystem->exists($sourceDir)) {
+            $this->io->write(sprintf(
+                "<error>Error executing %s recipe: %s directory doesn't exist.</>",
+                $this->state->getCurrentPackage(),
+                $sourceDir,
+            ));
+        }
+
+        $finder = new Finder();
+        $finder->in($sourceDir)
+            ->files();
+
+        foreach ($finder as $file) {
+            $destinationPathname = str_replace(
+                [$this->state->getCurrentPackageDirectory(), $source],
+                [$this->state->getProjectDirectory(), $this->state->replacePathPlaceholders($destination)],
+                $file->getPathname(),
+            );
+
+            $fileExists = $this->filesystem->exists($destinationPathname);
+
+            if ($fileExists && $file->getContents() === file_get_contents($destinationPathname)) {
+                $this->filesystem->remove($destinationPathname);
+                $this->io->write(sprintf('Removed file: %s', $destinationPathname));
             }
         }
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Williarin\Cook;
 
 use Composer\Factory;
+use Symfony\Component\Filesystem\Filesystem;
 
 final class State implements StateInterface
 {
@@ -14,6 +15,7 @@ final class State implements StateInterface
     private array $recipes = [];
 
     public function __construct(
+        private Filesystem $filesystem,
         private Options $options
     ) {
     }
@@ -67,9 +69,9 @@ final class State implements StateInterface
             $jsonRecipe = $this->getCurrentPackageDirectory() . '/cook.json';
             $yamlRecipe = $this->getCurrentPackageDirectory() . '/cook.yaml';
 
-            if (file_exists($yamlRecipe)) {
+            if ($this->filesystem->exists($yamlRecipe)) {
                 $recipePathname = $yamlRecipe;
-            } elseif (file_exists($jsonRecipe)) {
+            } elseif ($this->filesystem->exists($jsonRecipe)) {
                 $recipePathname = $jsonRecipe;
             } else {
                 $recipePathname = null;

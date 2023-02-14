@@ -57,7 +57,7 @@ abstract class AbstractMerger implements Merger
         if (\array_key_exists('source', $file)) {
             $sourcePathname = sprintf('%s/%s', $this->state->getCurrentPackageDirectory(), $file['source']);
 
-            if (!file_exists($sourcePathname)) {
+            if (!$this->filesystem->exists($sourcePathname)) {
                 $this->io->write(sprintf(
                     '<error>Error found in %s recipe: file "%s" not found.</>',
                     $this->state->getCurrentPackage(),
