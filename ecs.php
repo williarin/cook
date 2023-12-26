@@ -14,7 +14,6 @@ use PhpCsFixer\Fixer\Whitespace\ArrayIndentationFixer;
 use PhpCsFixer\Fixer\Whitespace\MethodChainingIndentationFixer;
 use PhpCsFixerCustomFixers\Fixer\NoDuplicatedImportsFixer;
 use Symplify\CodingStandard\Fixer\ArrayNotation\StandaloneLineInMultilineArrayFixer;
-use Symplify\CodingStandard\Fixer\LineLength\DocBlockLineLengthFixer;
 use Symplify\CodingStandard\Fixer\LineLength\LineLengthFixer;
 use Symplify\CodingStandard\Fixer\Spacing\MethodChainingNewlineFixer;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
@@ -23,26 +22,11 @@ use Symplify\EasyCodingStandard\ValueObject\Set\SetList;
 return static function (ECSConfig $ecsConfig): void {
     $ecsConfig->parallel();
 
-    $ecsConfig->paths([
-        __DIR__ . '/src',
-        __DIR__ . '/tests',
-    ]);
+    $ecsConfig->paths([__DIR__ . '/src', __DIR__ . '/tests']);
 
-    $ecsConfig->skip([
-        __DIR__ . '/ecs.php',
-        __DIR__ . '/tests/Dummy/',
-    ]);
+    $ecsConfig->skip([__DIR__ . '/ecs.php', __DIR__ . '/tests/Dummy/']);
 
-    $ecsConfig->sets([
-        SetList::SYMPLIFY,
-        SetList::PSR_12,
-        SetList::DOCTRINE_ANNOTATIONS,
-        SetList::CLEAN_CODE,
-    ]);
-
-    $ecsConfig->ruleWithConfiguration(DocBlockLineLengthFixer::class, [
-        DocBlockLineLengthFixer::LINE_LENGTH => 120,
-    ]);
+    $ecsConfig->sets([SetList::SYMPLIFY, SetList::PSR_12, SetList::DOCTRINE_ANNOTATIONS, SetList::CLEAN_CODE]);
 
     $ecsConfig->ruleWithConfiguration(YodaStyleFixer::class, [
         'equal' => false,
@@ -65,6 +49,7 @@ return static function (ECSConfig $ecsConfig): void {
 
     $ecsConfig->ruleWithConfiguration(LineLengthFixer::class, [
         LineLengthFixer::LINE_LENGTH => 120,
+
     ]);
 
     $ecsConfig->rule(NativeFunctionInvocationFixer::class);
