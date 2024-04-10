@@ -52,3 +52,16 @@ grumphp:
                 - 'function dump'
             triggered_by: ['php']
             regexp_type: G
+    testsuites:
+        default:
+            tasks:
+                - phpunit
+                - composer
+                - composer_normalize
+                - phplint
+                - phpparser
+                - git_commit_message
+                - git_blacklist
+        ecs:
+            tasks:
+                - ecs

@@ -30,7 +30,7 @@ final class PhpArrayMerger extends AbstractMerger
             $this->state->getProjectDirectory(),
             $this->state->replacePathPlaceholders($file['destination']),
         );
-        $output = $this->filesystem->exists($destinationPathname) ? require($destinationPathname) : [];
+        $output = $this->filesystem->exists($destinationPathname) ? require ($destinationPathname) : [];
         $changedCount = 0;
 
         foreach ($file['entries'] as $key => $value) {
