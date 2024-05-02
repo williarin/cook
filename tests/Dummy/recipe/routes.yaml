@@ -1,0 +1,3 @@
+other_routes:
+    resource: .
+    type: other_routes_loader

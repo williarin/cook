@@ -99,7 +99,7 @@ class YamlMerger extends AbstractMerger
         $content = file_get_contents($destinationPathname);
         $output = preg_replace(
             sprintf(
-                '/^\s*%s.*%s\n+?/simU',
+                '/^\s*%s.*%s(?:\r?\n)+?/simU',
                 preg_quote($this->getRecipeIdOpeningComment(), '/'),
                 preg_quote($this->getRecipeIdClosingComment(), '/'),
             ),
@@ -109,6 +109,19 @@ class YamlMerger extends AbstractMerger
 
         if ($content === $output) {
             return;
+        }
+
+        if (!empty($file['uninstall_empty_sections'])) {
+            $recipe = Yaml::parse($this->getSourceContent($file));
+            $after = Yaml::parse($output);
+
+            $recipeSections = array_keys(array_intersect_key($after, $recipe));
+
+            foreach ($recipeSections as $section) {
+                if (empty($after[$section])) {
+                    $output = preg_replace([sprintf('/^%s:\s*$/m', $section), '/\n+/'], ['', "\n"], $output);
+                }
+            }
         }
 
         if (!trim($output)) {
