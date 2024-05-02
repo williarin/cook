@@ -1,0 +1,11 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+other_routes:
+    ###> williarin/cook-example ###
+    resource: .
+    type: other_routes_loader
+    ###< williarin/cook-example ###

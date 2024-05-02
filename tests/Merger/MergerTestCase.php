@@ -13,6 +13,11 @@ use Williarin\Cook\StateInterface;
 
 abstract class MergerTestCase extends MockeryTestCase
 {
+    protected IOInterface|Mockery\MockInterface|Mockery\LegacyMockInterface $io;
+    protected Filesystem|Mockery\MockInterface|Mockery\LegacyMockInterface $filesystem;
+    protected ServiceLocator|Mockery\MockInterface|Mockery\LegacyMockInterface $filters;
+    protected StateInterface|Mockery\MockInterface|Mockery\LegacyMockInterface $state;
+
     protected function setUp(): void
     {
         parent::setUp();

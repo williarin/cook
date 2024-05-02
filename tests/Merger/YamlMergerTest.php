@@ -292,13 +292,11 @@ class YamlMergerTest extends MergerTestCase
             'blank_line_after' => ['services'],
         ];
 
-        $this->filesystem->shouldReceive('exists')
-            ->once()
+        $this->filesystem->expects('exists')
             ->andReturn(true);
 
-        $this->filesystem->shouldReceive('dumpFile')
-            ->once()
-            ->with(
+        $this->filesystem->expects()
+            ->dumpFile(
                 './tests/Dummy/after/services.yaml',
                 <<<CODE_SAMPLE
                 parameters:
@@ -321,9 +319,75 @@ class YamlMergerTest extends MergerTestCase
                 ,
             );
 
-        $this->io->shouldReceive('write')
+        $this->io->expects()
+            ->write('Updated file: ./tests/Dummy/after/services.yaml');
+
+        $this->merger->uninstall($file);
+    }
+
+    public function testUninstallRecipeUninstallEmptySection(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/after/routes.yaml',
+            'source' => 'routes.yaml',
+            'uninstall_empty_sections' => true,
+        ];
+
+        $this->filesystem->expects('exists')
+            ->atLeast()
             ->once()
-            ->with('Updated file: ./tests/Dummy/after/services.yaml');
+            ->andReturn(true);
+
+        $this->filesystem->expects()
+            ->dumpFile(
+                './tests/Dummy/after/routes.yaml',
+                <<<CODE_SAMPLE
+                controllers:
+                    resource:
+                        path: ../src/Controller/
+                        namespace: App\Controller
+                    type: attribute
+                
+                CODE_SAMPLE
+                ,
+            );
+
+        $this->io->expects()
+            ->write('Updated file: ./tests/Dummy/after/routes.yaml');
+
+        $this->merger->uninstall($file);
+    }
+
+    public function testUninstallRecipeWithoutUninstallEmptySection(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/after/routes.yaml',
+            'source' => 'routes.yaml',
+        ];
+
+        $this->filesystem->expects('exists')
+            ->atLeast()
+            ->once()
+            ->andReturn(true);
+
+        $this->filesystem->expects()
+            ->dumpFile(
+                './tests/Dummy/after/routes.yaml',
+                <<<CODE_SAMPLE
+                controllers:
+                    resource:
+                        path: ../src/Controller/
+                        namespace: App\Controller
+                    type: attribute
+                
+                other_routes:
+                
+                CODE_SAMPLE
+                ,
+            );
+
+        $this->io->expects()
+            ->write('Updated file: ./tests/Dummy/after/routes.yaml');
 
         $this->merger->uninstall($file);
     }
