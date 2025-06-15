@@ -52,7 +52,6 @@ return static function (ECSConfig $ecsConfig): void {
 
     ]);
 
-    $ecsConfig->rule(NativeFunctionInvocationFixer::class);
     $ecsConfig->rule(NoTrailingCommaInSinglelineFixer::class);
     $ecsConfig->rule(TrailingCommaInMultilineFixer::class);
     $ecsConfig->rule(MethodChainingNewlineFixer::class);
