@@ -23,7 +23,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php: ['8.0', '8.1', '8.2', '8.3']
+                php: ['8.0', '8.1', '8.2', '8.3', '8.4']
                 symfony_version: ['5.4.*', '6.0.*', '6.1.*', '6.2.*' , '6.3.*', '6.4.*', '7.0.*']
                 composer-flags: ['--prefer-stable']
                 exclude:
