@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Williarin\Cook\Merger;
 
 use Composer\IO\IOInterface;
-use Symfony\Component\DependencyInjection\Attribute\TaggedLocator;
+use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Filesystem\Filesystem;
 use Williarin\Cook\Filter\Filter;
@@ -17,7 +17,7 @@ abstract class AbstractMerger implements Merger
         protected IOInterface $io,
         protected StateInterface $state,
         protected Filesystem $filesystem,
-        #[TaggedLocator(Filter::class, defaultIndexMethod: 'getName')]
+        #[AutowireLocator(Filter::class, defaultIndexMethod: 'getName')]
         private ServiceLocator $filters,
     ) {
     }

@@ -7,7 +7,7 @@ namespace Williarin\Cook;
 use Composer\Composer;
 use Composer\InstalledVersions;
 use Composer\IO\IOInterface;
-use Symfony\Component\DependencyInjection\Attribute\TaggedLocator;
+use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -27,7 +27,7 @@ final class Oven
         private IOInterface $io,
         private Filesystem $filesystem,
         private State $state,
-        #[TaggedLocator(Merger::class, defaultIndexMethod: 'getName')]
+        #[AutowireLocator(Merger::class, defaultIndexMethod: 'getName')]
         private ServiceLocator $mergers,
     ) {
     }
