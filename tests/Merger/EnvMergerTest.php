@@ -4,42 +4,16 @@ declare(strict_types=1);
 
 namespace Williarin\Cook\Test\Merger;
 
-use Composer\IO\IOInterface;
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\ServiceLocator;
-use Symfony\Component\Filesystem\Filesystem;
 use Williarin\Cook\Merger\EnvMerger;
-use Williarin\Cook\StateInterface;
 
-class EnvMergerTest extends TestCase
+class EnvMergerTest extends MergerTestCase
 {
     private EnvMerger $merger;
-    private IOInterface $io;
-    private Filesystem $filesystem;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->io = $this->createMock(IOInterface::class);
-        $this->filesystem = $this->createMock(Filesystem::class);
-        $state = $this->createMock(StateInterface::class);
-        $filters = $this->createMock(ServiceLocator::class);
-
-        $state
-            ->method('getCurrentPackage')
-            ->willReturn('williarin/cook-example');
-        $state
-            ->method('getCurrentPackageDirectory')
-            ->willReturn('tests/Dummy/recipe');
-        $state
-            ->method('getProjectDirectory')
-            ->willReturn('.');
-        $state
-            ->method('replacePathPlaceholders')
-            ->willReturnArgument(0);
-
-        $this->merger = new EnvMerger($this->io, $state, $this->filesystem, $filters);
+        $this->merger = new EnvMerger($this->io, $this->state, $this->filesystem, $this->filters);
     }
 
     public function testGetName(): void

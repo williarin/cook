@@ -23,12 +23,11 @@ class DockerComposeMergerTest extends MergerTestCase
 
     public function testMergeWithoutContent(): void
     {
-        $this->io->shouldReceive('write')
-            ->once()
+        $this->io->expects($this->once())
+            ->method('write')
             ->with(
                 '<error>Error found in williarin/cook-example recipe: "source" or "content" field is required for "docker_compose" file type.</>'
-            )
-        ;
+            );
 
         $this->merger->merge([]);
     }

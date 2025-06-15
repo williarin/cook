@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Williarin\Cook\Test\Filter;
 
-use Monolog\Test\TestCase;
+use PHPUnit\Framework\TestCase;
 use Williarin\Cook\Filter\ClassConstantFilter;
 
 class ClassConstantFilterTest extends TestCase
