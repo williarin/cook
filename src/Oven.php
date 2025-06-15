@@ -228,6 +228,7 @@ final class Oven
                             'json',
                             'yaml',
                             'docker_compose',
+                            'env',
                         ])),
                         'source' => new Assert\Optional([new Assert\NotBlank(), new Assert\Type('string')]),
                         'destination' => [new Assert\NotBlank(), new Assert\Type('string')],
@@ -243,6 +244,7 @@ final class Oven
                         ]),
                         'valid_sections' => new Assert\Optional(new Assert\Type('array')),
                         'blank_line_after' => new Assert\Optional(new Assert\Type('array')),
+                        'if_exists' => new Assert\Optional(new Assert\Choice(['comment', 'delete'])),
                     ]),
                 ),
             ),
@@ -283,6 +285,7 @@ final class Oven
                             'source',
                             'valid_sections',
                             'blank_line_after',
+                            'if_exists',
                         ])
                         ->setDefaults([
                             'type' => 'text',
