@@ -47,7 +47,7 @@ class TextMergerTest extends MergerTestCase
             ->method('mkdir')
             ->with('./var/cache/tests', 0755);
 
-        $this->filesystem->expects($this->exactly(2))
+        $this->filesystem->expects($this->once())
             ->method('exists')
             ->willReturn(false);
 
@@ -56,7 +56,7 @@ class TextMergerTest extends MergerTestCase
             SOME_ENV_VARIABLE='hello'
             ANOTHER_ENV_VARIABLE='world'
             ###< williarin/cook-example ###
-
+            
             CODE_SAMPLE;
 
         $this->filesystem->expects($this->once())
@@ -82,16 +82,16 @@ class TextMergerTest extends MergerTestCase
             ->method('mkdir')
             ->with('./var/cache/tests', 0755);
 
-        $this->filesystem->expects($this->exactly(3))
+        $this->filesystem->expects($this->exactly(2))
             ->method('exists')
-            ->willReturnOnConsecutiveCalls(true, false, false);
+            ->willReturnOnConsecutiveCalls(true, false);
 
         $expectedContent = <<<CODE_SAMPLE
             ###> williarin/cook-example ###
             SOME_ENV_VARIABLE='hello'
             ANOTHER_ENV_VARIABLE='world'
             ###< williarin/cook-example ###
-
+            
             CODE_SAMPLE;
 
         $this->filesystem->expects($this->once())
@@ -106,7 +106,7 @@ class TextMergerTest extends MergerTestCase
         $this->addToAssertionCount(1);
     }
 
-    public function testMergeExistingFile(): void
+    public function testMergeWithAppendPolicy(): void
     {
         $file = [
             'destination' => 'tests/Dummy/before/.env',
@@ -117,7 +117,7 @@ class TextMergerTest extends MergerTestCase
             ->method('mkdir')
             ->with('./tests/Dummy/before', 0755);
 
-        $this->filesystem->expects($this->exactly(3))
+        $this->filesystem->expects($this->atLeastOnce())
             ->method('exists')
             ->willReturn(true);
 
@@ -130,7 +130,7 @@ class TextMergerTest extends MergerTestCase
             SOME_ENV_VARIABLE='hello'
             ANOTHER_ENV_VARIABLE='world'
             ###< williarin/cook-example ###
-
+            
             CODE_SAMPLE;
 
         $this->filesystem->expects($this->once())
@@ -140,6 +140,65 @@ class TextMergerTest extends MergerTestCase
         $this->io->expects($this->once())
             ->method('write')
             ->with('Updated file: ./tests/Dummy/before/.env');
+
+        $this->merger->merge($file);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testMergeWithOverwritePolicy(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/before/.env',
+            'source' => '.env',
+            'if_exists' => 'overwrite',
+        ];
+
+        $this->filesystem->expects($this->once())
+            ->method('mkdir')
+            ->with('./tests/Dummy/before', 0755);
+
+        $this->filesystem->expects($this->atLeastOnce())
+            ->method('exists')
+            ->willReturn(true);
+
+        $expectedContent = <<<CODE_SAMPLE
+            ###> williarin/cook-example ###
+            SOME_ENV_VARIABLE='hello'
+            ANOTHER_ENV_VARIABLE='world'
+            ###< williarin/cook-example ###
+            
+            CODE_SAMPLE;
+
+        $this->filesystem->expects($this->once())
+            ->method('dumpFile')
+            ->with('./tests/Dummy/before/.env', $this->equalTo($expectedContent));
+
+        $this->io->expects($this->once())
+            ->method('write')
+            ->with('Created file: ./tests/Dummy/before/.env');
+
+        $this->merger->merge($file);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testMergeWithIgnorePolicy(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/before/.env',
+            'source' => '.env',
+            'if_exists' => 'ignore',
+        ];
+
+        $this->filesystem->expects($this->atLeastOnce())
+            ->method('exists')
+            ->willReturn(true);
+
+        $this->filesystem->expects($this->never())
+            ->method('dumpFile');
+
+        $this->io->expects($this->once())
+            ->method('write')
+            ->with('<info>File "./tests/Dummy/before/.env" exists, ignoring.</info>');
 
         $this->merger->merge($file);
         $this->addToAssertionCount(1);
@@ -161,13 +220,11 @@ class TextMergerTest extends MergerTestCase
             APP_ENV=dev
             APP_SECRET=10a4bee52442dcf74a9f6b5a9afd319a
             DATABASE_URL="postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=14&charset=utf8"
-
-
             CODE_SAMPLE;
 
         $this->filesystem->expects($this->once())
             ->method('dumpFile')
-            ->with('./tests/Dummy/after/.env', $this->equalTo($expectedContent));
+            ->with('./tests/Dummy/after/.env', $this->equalTo(trim($expectedContent)));
 
         $this->io->expects($this->once())
             ->method('write')

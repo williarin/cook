@@ -25,7 +25,7 @@ trait TextMergerUninstallTrait
         $content = file_get_contents($destinationPathname);
         $output = preg_replace(
             sprintf(
-                '/%s.*%s\n/simU',
+                "/\n*\n?%s.*%s\n?/s",
                 preg_quote($this->getRecipeIdOpeningComment(), '/'),
                 preg_quote($this->getRecipeIdClosingComment(), '/'),
             ),
