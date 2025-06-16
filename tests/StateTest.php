@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Williarin\Cook\Test;
 
 use Composer\Composer;
-use Mockery;
-use Mockery\Adapter\Phpunit\MockeryTestCase;
+use Composer\Package\RootPackageInterface;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Williarin\Cook\Options;
 use Williarin\Cook\State;
 
-class StateTest extends MockeryTestCase
+class StateTest extends TestCase
 {
     private State $state;
     private Filesystem $filesystem;
@@ -20,10 +20,16 @@ class StateTest extends MockeryTestCase
     {
         parent::setUp();
 
-        $composer = Mockery::mock(Composer::class);
-        $composer->shouldReceive('getPackage->getExtra');
+        $package = $this->createMock(RootPackageInterface::class);
+        $package->method('getExtra')
+            ->willReturn([]);
+
+        $composer = $this->createMock(Composer::class);
+        $composer->method('getPackage')
+            ->willReturn($package);
+
         $options = new Options($composer);
-        $this->filesystem = Mockery::mock(Filesystem::class);
+        $this->filesystem = $this->createMock(Filesystem::class);
         $this->state = new State($this->filesystem, $options);
     }
 
@@ -62,9 +68,10 @@ class StateTest extends MockeryTestCase
     {
         $this->state->setCurrentPackage('williarin/cook-example');
 
-        $this->filesystem->shouldReceive('exists')
-            ->once()
-            ->andReturn(true);
+        $this->filesystem->expects($this->once())
+            ->method('exists')
+            ->with('./vendor/williarin/cook-example/cook.yaml')
+            ->willReturn(true);
 
         $this->assertSame('./vendor/williarin/cook-example/cook.yaml', $this->state->getCurrentPackageRecipePathname());
     }
@@ -73,9 +80,12 @@ class StateTest extends MockeryTestCase
     {
         $this->state->setCurrentPackage('williarin/cook-example');
 
-        $this->filesystem->shouldReceive('exists')
-            ->twice()
-            ->andReturn(false, true);
+        $this->filesystem->expects($this->exactly(2))
+            ->method('exists')
+            ->willReturnMap([
+                ['./vendor/williarin/cook-example/cook.yaml', false],
+                ['./vendor/williarin/cook-example/cook.json', true],
+            ]);
 
         $this->assertSame('./vendor/williarin/cook-example/cook.json', $this->state->getCurrentPackageRecipePathname());
     }
@@ -84,9 +94,9 @@ class StateTest extends MockeryTestCase
     {
         $this->state->setCurrentPackage('williarin/cook-example');
 
-        $this->filesystem->shouldReceive('exists')
-            ->twice()
-            ->andReturn(false);
+        $this->filesystem->expects($this->exactly(2))
+            ->method('exists')
+            ->willReturn(false);
 
         $this->assertNull($this->state->getCurrentPackageRecipePathname());
     }

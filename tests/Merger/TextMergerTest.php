@@ -23,12 +23,11 @@ class TextMergerTest extends MergerTestCase
 
     public function testMergeWithoutContent(): void
     {
-        $this->io->shouldReceive('write')
-            ->once()
+        $this->io->expects($this->once())
+            ->method('write')
             ->with(
                 '<error>Error found in williarin/cook-example recipe: "source" or "content" field is required for "text" file type.</>'
-            )
-        ;
+            );
 
         $this->merger->merge([]);
     }
@@ -44,33 +43,32 @@ class TextMergerTest extends MergerTestCase
             ,
         ];
 
-        $this->filesystem->shouldReceive('mkdir')
-            ->once()
+        $this->filesystem->expects($this->once())
+            ->method('mkdir')
             ->with('./var/cache/tests', 0755);
 
-        $this->filesystem->shouldReceive('exists')
-            ->twice()
-            ->andReturn(false);
+        $this->filesystem->expects($this->once())
+            ->method('exists')
+            ->willReturn(false);
 
-        $this->filesystem->shouldReceive('dumpFile')
-            ->once()
-            ->with(
-                './var/cache/tests/.env',
-                <<<CODE_SAMPLE
-                ###> williarin/cook-example ###
-                SOME_ENV_VARIABLE='hello'
-                ANOTHER_ENV_VARIABLE='world'
-                ###< williarin/cook-example ###
-                
-                CODE_SAMPLE
-                ,
-            );
+        $expectedContent = <<<CODE_SAMPLE
+            ###> williarin/cook-example ###
+            SOME_ENV_VARIABLE='hello'
+            ANOTHER_ENV_VARIABLE='world'
+            ###< williarin/cook-example ###
+            
+            CODE_SAMPLE;
 
-        $this->io->shouldReceive('write')
-            ->once()
+        $this->filesystem->expects($this->once())
+            ->method('dumpFile')
+            ->with('./var/cache/tests/.env', $this->equalTo($expectedContent));
+
+        $this->io->expects($this->once())
+            ->method('write')
             ->with('Created file: ./var/cache/tests/.env');
 
         $this->merger->merge($file);
+        $this->addToAssertionCount(1);
     }
 
     public function testMergeNewFileWithContentAsFile(): void
@@ -80,73 +78,130 @@ class TextMergerTest extends MergerTestCase
             'source' => '.env',
         ];
 
-        $this->filesystem->shouldReceive('mkdir')
-            ->once()
+        $this->filesystem->expects($this->once())
+            ->method('mkdir')
             ->with('./var/cache/tests', 0755);
 
-        $this->filesystem->shouldReceive('exists')
-            ->times(3)
-            ->andReturn(true, false, false);
+        $this->filesystem->expects($this->exactly(2))
+            ->method('exists')
+            ->willReturnOnConsecutiveCalls(true, false);
 
-        $this->filesystem->shouldReceive('dumpFile')
-            ->once()
-            ->with(
-                './var/cache/tests/.env',
-                <<<CODE_SAMPLE
-                ###> williarin/cook-example ###
-                SOME_ENV_VARIABLE='hello'
-                ANOTHER_ENV_VARIABLE='world'
-                ###< williarin/cook-example ###
-                
-                CODE_SAMPLE
-                ,
-            );
+        $expectedContent = <<<CODE_SAMPLE
+            ###> williarin/cook-example ###
+            SOME_ENV_VARIABLE='hello'
+            ANOTHER_ENV_VARIABLE='world'
+            ###< williarin/cook-example ###
+            
+            CODE_SAMPLE;
 
-        $this->io->shouldReceive('write')
-            ->once()
+        $this->filesystem->expects($this->once())
+            ->method('dumpFile')
+            ->with('./var/cache/tests/.env', $this->equalTo($expectedContent));
+
+        $this->io->expects($this->once())
+            ->method('write')
             ->with('Created file: ./var/cache/tests/.env');
 
         $this->merger->merge($file);
+        $this->addToAssertionCount(1);
     }
 
-    public function testMergeExistingFile(): void
+    public function testMergeWithAppendPolicy(): void
     {
         $file = [
             'destination' => 'tests/Dummy/before/.env',
             'source' => '.env',
         ];
 
-        $this->filesystem->shouldReceive('mkdir')
-            ->once()
+        $this->filesystem->expects($this->once())
+            ->method('mkdir')
             ->with('./tests/Dummy/before', 0755);
 
-        $this->filesystem->shouldReceive('exists')
-            ->times(3)
-            ->andReturn(true);
+        $this->filesystem->expects($this->atLeastOnce())
+            ->method('exists')
+            ->willReturn(true);
 
-        $this->filesystem->shouldReceive('dumpFile')
-            ->once()
-            ->with(
-                './tests/Dummy/before/.env',
-                <<<CODE_SAMPLE
-                APP_ENV=dev
-                APP_SECRET=10a4bee52442dcf74a9f6b5a9afd319a
-                DATABASE_URL="postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=14&charset=utf8"
+        $expectedContent = <<<CODE_SAMPLE
+            APP_ENV=dev
+            APP_SECRET=10a4bee52442dcf74a9f6b5a9afd319a
+            DATABASE_URL="postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=14&charset=utf8"
 
-                ###> williarin/cook-example ###
-                SOME_ENV_VARIABLE='hello'
-                ANOTHER_ENV_VARIABLE='world'
-                ###< williarin/cook-example ###
-                
-                CODE_SAMPLE
-                ,
-            );
+            ###> williarin/cook-example ###
+            SOME_ENV_VARIABLE='hello'
+            ANOTHER_ENV_VARIABLE='world'
+            ###< williarin/cook-example ###
+            
+            CODE_SAMPLE;
 
-        $this->io->shouldReceive('write')
-            ->once()
+        $this->filesystem->expects($this->once())
+            ->method('dumpFile')
+            ->with('./tests/Dummy/before/.env', $this->equalTo($expectedContent));
+
+        $this->io->expects($this->once())
+            ->method('write')
             ->with('Updated file: ./tests/Dummy/before/.env');
 
         $this->merger->merge($file);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testMergeWithOverwritePolicy(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/before/.env',
+            'source' => '.env',
+            'if_exists' => 'overwrite',
+        ];
+
+        $this->filesystem->expects($this->once())
+            ->method('mkdir')
+            ->with('./tests/Dummy/before', 0755);
+
+        $this->filesystem->expects($this->atLeastOnce())
+            ->method('exists')
+            ->willReturn(true);
+
+        $expectedContent = <<<CODE_SAMPLE
+            ###> williarin/cook-example ###
+            SOME_ENV_VARIABLE='hello'
+            ANOTHER_ENV_VARIABLE='world'
+            ###< williarin/cook-example ###
+            
+            CODE_SAMPLE;
+
+        $this->filesystem->expects($this->once())
+            ->method('dumpFile')
+            ->with('./tests/Dummy/before/.env', $this->equalTo($expectedContent));
+
+        $this->io->expects($this->once())
+            ->method('write')
+            ->with('Created file: ./tests/Dummy/before/.env');
+
+        $this->merger->merge($file);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testMergeWithIgnorePolicy(): void
+    {
+        $file = [
+            'destination' => 'tests/Dummy/before/.env',
+            'source' => '.env',
+            'if_exists' => 'ignore',
+        ];
+
+        $this->filesystem->expects($this->atLeastOnce())
+            ->method('exists')
+            ->willReturn(true);
+
+        $this->filesystem->expects($this->never())
+            ->method('dumpFile');
+
+        $this->io->expects($this->once())
+            ->method('write')
+            ->with('<info>File "./tests/Dummy/before/.env" exists, ignoring.</info>');
+
+        $this->merger->merge($file);
+        $this->addToAssertionCount(1);
     }
 
     public function testUninstallRecipe(): void
@@ -156,27 +211,26 @@ class TextMergerTest extends MergerTestCase
             'source' => '.env',
         ];
 
-        $this->filesystem->shouldReceive('exists')
-            ->once()
-            ->andReturn(true);
+        $this->filesystem->expects($this->once())
+            ->method('exists')
+            ->with('./tests/Dummy/after/.env')
+            ->willReturn(true);
 
-        $this->filesystem->shouldReceive('dumpFile')
-            ->once()
-            ->with(
-                './tests/Dummy/after/.env',
-                <<<CODE_SAMPLE
-                APP_ENV=dev
-                APP_SECRET=10a4bee52442dcf74a9f6b5a9afd319a
-                DATABASE_URL="postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=14&charset=utf8"
-                \n
-                CODE_SAMPLE
-                ,
-            );
+        $expectedContent = <<<CODE_SAMPLE
+            APP_ENV=dev
+            APP_SECRET=10a4bee52442dcf74a9f6b5a9afd319a
+            DATABASE_URL="postgresql://app:!ChangeMe!@127.0.0.1:5432/app?serverVersion=14&charset=utf8"
+            CODE_SAMPLE;
 
-        $this->io->shouldReceive('write')
-            ->once()
+        $this->filesystem->expects($this->once())
+            ->method('dumpFile')
+            ->with('./tests/Dummy/after/.env', $this->equalTo(trim($expectedContent)));
+
+        $this->io->expects($this->once())
+            ->method('write')
             ->with('Updated file: ./tests/Dummy/after/.env');
 
         $this->merger->uninstall($file);
+        $this->addToAssertionCount(1);
     }
 }

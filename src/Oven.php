@@ -7,7 +7,7 @@ namespace Williarin\Cook;
 use Composer\Composer;
 use Composer\InstalledVersions;
 use Composer\IO\IOInterface;
-use Symfony\Component\DependencyInjection\Attribute\TaggedLocator;
+use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -27,7 +27,7 @@ final class Oven
         private IOInterface $io,
         private Filesystem $filesystem,
         private State $state,
-        #[TaggedLocator(Merger::class, defaultIndexMethod: 'getName')]
+        #[AutowireLocator(Merger::class, defaultIndexMethod: 'getName')]
         private ServiceLocator $mergers,
     ) {
     }
@@ -228,6 +228,7 @@ final class Oven
                             'json',
                             'yaml',
                             'docker_compose',
+                            'env',
                         ])),
                         'source' => new Assert\Optional([new Assert\NotBlank(), new Assert\Type('string')]),
                         'destination' => [new Assert\NotBlank(), new Assert\Type('string')],
@@ -243,6 +244,13 @@ final class Oven
                         ]),
                         'valid_sections' => new Assert\Optional(new Assert\Type('array')),
                         'blank_line_after' => new Assert\Optional(new Assert\Type('array')),
+                        'if_exists' => new Assert\Optional(new Assert\Choice([
+                            'comment',
+                            'delete',
+                            'overwrite',
+                            'append',
+                            'ignore',
+                        ])),
                     ]),
                 ),
             ),
@@ -283,6 +291,7 @@ final class Oven
                             'source',
                             'valid_sections',
                             'blank_line_after',
+                            'if_exists',
                         ])
                         ->setDefaults([
                             'type' => 'text',

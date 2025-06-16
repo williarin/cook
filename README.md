@@ -84,17 +84,18 @@ Files are a described as key-value pairs.
 
 If a string is given, it must be a path to the source file.
 
-| Parameter                    | Type                                           | Comments                                                                                                                                                                                                                                                                                                                                                                                                                  |
-|------------------------------|------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **type**                     | string                                         | Type of file.<br/><br/>**Choices:**<ul><li>`text`</li><li>`php_array`</li><li>`json`</li><li>`yaml`</li><li>`docker_compose`</li></ul>**Default:** `text`<br/>**Optional**                                                                                                                                                                                                                                                |
-| **destination**              | string                                         | Path of the destination file in the project that will be created or merged.<br/><br/>**Required**                                                                                                                                                                                                                                                                                                                         |
-| **source**                   | string                                         | Path of the source file in the package which content will be used to create or merge in the destination file.<br/><br/>**Required** if **content** isn't defined                                                                                                                                                                                                                                                          |
-| **content**                  | string                                         | Text to merge in the destination file.<br/><br/>**Required** if **source** isn't defined                                                                                                                                                                                                                                                                                                                                  |
-| **entries**                  | array<string, mixed>                           | Key-value pairs used to fill a PHP or JSON array.<br/><br/>**Required** if **type** is of type `php_array` or `json`                                                                                                                                                                                                                                                                                                      |
-| **filters**                  | {keys: array\<string>, values: array\<string>} | Filters for **entries** when **type** is `php_array`.<br/><br/>**Choices:**<ul><li>`keys`<ul><li>`class_constant` Convert the given string to a class constant. As an example, `'Williarin\Cook'` becomes `Williarin\Cook::class`</li></ul></li><li>`values`<ul><li>`class_constant` See above</li><li>`single_line_array` If the value is an array, it will be exported on a single line</li></ul></li></ul>**Optional** |
-| **valid_sections**           | array\<string>                                 | Used if **type** is `yaml` or `json` in order to restrict which top-level parameters need to be merged.<br/><br/>Example: `[parameters, services]`<br/><br/>**Optional**                                                                                                                                                                                                                                                  |
-| **blank_line_after**         | array\<string>                                 | Used if **type** is `yaml` in order to add a blank line under the merged section.<br/><br/>Example: `[services]`<br/><br/>**Optional**                                                                                                                                                                                                                                                                                    |
-| **uninstall_empty_sections** | boolean                                        | Used if **type** is `yaml` in order to remove an empty recipe section when uninstalling the recipe.<br/><br/>**Default:** `false`<br/>**Optional**                                                                                                                                                                                                                                                                        |
+| Parameter                    | Type                                           | Comments                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|------------------------------|------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **type**                     | string                                         | Type of file.<br/><br/>**Choices:**<ul><li>`text`</li><li>`php_array`</li><li>`json`</li><li>`yaml`</li><li>`env`</li><li>`docker_compose`</li></ul>**Default:** `text`<br/>**Optional**                                                                                                                                                                                                                                                                                                                                                            |
+| **destination**              | string                                         | Path of the destination file in the project that will be created or merged.<br/><br/>**Required**                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **source**                   | string                                         | Path of the source file in the package which content will be used to create or merge in the destination file.<br/><br/>**Required** if **content** isn't defined                                                                                                                                                                                                                                                                                                                                                                                    |
+| **content**                  | string                                         | Text to merge in the destination file.<br/><br/>**Required** if **source** isn't defined                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **entries**                  | array<string, mixed>                           | Key-value pairs used to fill a PHP or JSON array.<br/><br/>**Required** if **type** is of type `php_array` or `json`                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **filters**                  | {keys: array\<string>, values: array\<string>} | Filters for **entries** when **type** is `php_array`.<br/><br/>**Choices:**<ul><li>`keys`<ul><li>`class_constant` Convert the given string to a class constant. As an example, `'Williarin\Cook'` becomes `Williarin\Cook::class`</li></ul></li><li>`values`<ul><li>`class_constant` See above</li><li>`single_line_array` If the value is an array, it will be exported on a single line</li></ul></li></ul>**Optional**                                                                                                                           |
+| **valid_sections**           | array\<string>                                 | Used if **type** is `yaml` or `json` in order to restrict which top-level parameters need to be merged.<br/><br/>Example: `[parameters, services]`<br/><br/>**Optional**                                                                                                                                                                                                                                                                                                                                                                            |
+| **blank_line_after**         | array\<string>                                 | Used if **type** is `yaml` in order to add a blank line under the merged section.<br/><br/>Example: `[services]`<br/><br/>**Optional**                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **uninstall_empty_sections** | boolean                                        | Used if **type** is `yaml` in order to remove an empty recipe section when uninstalling the recipe.<br/><br/>**Default:** `false`<br/>**Optional**                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **if_exists**                | string                                         | Used if **type** is `text` or `env`. <br/><br/>**Choices:**<ul><li>For type `type`<ul><li>`append` Adds content to the end of an existing file, or creates a new one.</li><li>`overwrite` Overwrites existing content, or creates a new file.</li><li>`ignore` Doesn't alter an existing file, or creates a new file.</li></ul></li><li>For type `env`<ul><li>`comment` Comments same name env vars</li><li>`delete` Delete same name env vars</li></ul></li></ul>**Default:** `append` for `text` type. `comment` for `env` type.<br/>**Optional** |
 
 #### Directories
 
@@ -114,10 +115,60 @@ You can use colors using [Symfony Console](https://symfony.com/doc/current/conso
 
 The text merger can be used to extend any text-based file such as:
 * .gitignore
-* .env
 * Makefile
 
 As it's the default merger, you can simply use the `destination: source` format in the recipe.
+
+**Example 1:** append to an existing file
+
+Given `yourrepo/recipe/.gitignore` with this content:
+```
+# Ignore the .env file
+.env
+```
+With this recipe:
+```yaml
+files:
+    .gitignore: recipe/.gitignore
+```
+The created `.gitignore` file will look like this:
+```
+###> yourname/yourrepo ###
+# Ignore the .env file
+.env
+###< yourname/yourrepo ###
+```
+
+The `###> yourname/yourrepo ###` opening comment and `###< yourname/yourrepo ###` closing comment are used by Cook to identify the recipe in the file.
+If you're familiar with Symfony Flex, the syntax is the same.
+
+**Example 2:** overwrite an existing file
+
+If you want to overwrite the existing file, you can use the `if_exists` parameter.
+
+```yaml
+files:
+    .gitignore:
+        source: recipe/.gitignore
+        if_exists: overwrite
+```
+This will replace the entire content of the `.gitignore` file with the content of `recipe/.gitignore`.
+
+**Example 3:** ignore an existing file
+
+If you want to ignore the existing file, you can use the `if_exists` parameter.
+
+```yaml
+files:
+    .gitignore:
+        source: recipe/.gitignore
+        if_exists: ignore
+```
+This will not alter the existing `.gitignore` file, and will not create a new one if it doesn't exist.
+
+#### Env
+
+The env merger is used to add new environment variables to an existing `.env` file or create a new one if it doesn't exist.
 
 **Example 1:** merge or create a `.env` file with a given source file
 
@@ -126,21 +177,30 @@ Given `yourrepo/recipe/.env` with this content:
 SOME_ENV_VARIABLE='hello'
 ANOTHER_ENV_VARIABLE='world'
 ```
+And an existing `.env` file in the project with this content:
+```dotenv
+# Existing environment variables
+SOME_ENV_VARIABLE='foo'
+```
 With this recipe:
 ```yaml
 files:
-    .env: recipe/.env
+    .env:
+        type: env
+        source: recipe/.env
 ```
 The created `.env` file will look like this:
 ```dotenv
+# Existing environment variables
+#SOME_ENV_VARIABLE='foo'
+
 ###> yourname/yourrepo ###
 SOME_ENV_VARIABLE='hello'
 ANOTHER_ENV_VARIABLE='world'
 ###< yourname/yourrepo ###
 ```
 
-The `###> yourname/yourrepo ###` opening comment and `###< yourname/yourrepo ###` closing comment are used by Cook to identify the recipe in the file.
-If you're familiar with Symfony Flex, the syntax is the same.
+The existing `SOME_ENV_VARIABLE` is commented out to avoid conflicts with the new value, this is the default behavior of the env merger.
 
 **Example 2:** merge or create a `.env` file with a string input
 
